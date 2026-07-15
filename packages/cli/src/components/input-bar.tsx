@@ -34,10 +34,31 @@ export function InputBar({ onSubmit, disabled = false }: Props) {
 		setSelectedIndex
 	} = useCommandMenu()
 
-	const handleCommandExecute = useCallback((index: number) => {
-		const command = resolveCommand(index)
-		handleCommand(command)
-	}, [])
+	const handleCommand = useCallback(
+		(command: Command | undefined) => {
+			const textArea = textAreaRef.current
+			if (!textArea || !command) return
+
+			textArea.setText('')
+
+			if (command.action) {
+				command.action({
+					exit: () => renderer.destroy()
+				})
+			} else {
+				textArea.insertText(command.value + ' ')
+			}
+		},
+		[renderer]
+	)
+
+	const handleCommandExecute = useCallback(
+		(index: number) => {
+			const command = resolveCommand(index)
+			handleCommand(command)
+		},
+		[handleCommand, resolveCommand]
+	)
 
 	const handleTextareaContentChange = useCallback(() => {
 		const textarea = textAreaRef.current
@@ -58,24 +79,6 @@ export function InputBar({ onSubmit, disabled = false }: Props) {
 		onSubmit(text)
 		textarea.setText('')
 	}, [disabled, onSubmit])
-
-	const handleCommand = useCallback(
-		(command: Command | undefined) => {
-			const textArea = textAreaRef.current
-			if (!textArea || !command) return
-
-			textArea.setText('')
-
-			if (command.action) {
-				command.action({
-					exit: () => renderer.destroy()
-				})
-			} else {
-				textArea.insertText(command.value + ' ')
-			}
-		},
-		[renderer]
-	)
 
 	// Wire up textarea submit handler once so it always reads the latest state.
 	useEffect(() => {
